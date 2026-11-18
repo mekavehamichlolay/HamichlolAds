@@ -51,24 +51,25 @@ class HookHandler implements
 
 	public function onUserGetRights( $user, &$rights ){
 		if ( in_array( self::HAMICHLLOL_ADS_EXEMPT_RIGHT, $rights ) ) {
-			return;
+			return true;
 		}
 		if ( !$user->isRegistered() ) {
-			return;
+			return true;
 		}
 		$registrationDate = MediaWikiServices::getInstance()->getUserRegistrationLookup()->getFirstRegistration( $user );
 		if ( !$registrationDate ) {
-			return;
+			return true;
 		}
 		$blocked = $user->getBlock();
 		if ( (bool)$blocked?->isSitewide() ) {
-			return;
+			return true;
 		}
 		$age = time() - (int)wfTimestampOrNull( TimestampFormat::UNIX, $registrationDate );
 		$contributions = MediaWikiServices::getInstance()->getUserEditTracker()->getUserEditCount( $user );
 		if ( $age >= $this->config->get( 'HamichlolAdsExemptAge' )  && $contributions >= $this->config->get( 'HamichlolAdsExemptContributions' ) ) {
 			$rights[] = self::HAMICHLLOL_ADS_EXEMPT_RIGHT;
 		}
+		return true;
 	}
 
 	/**
