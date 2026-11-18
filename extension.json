@@ -24,7 +24,9 @@
 			"class": "MediaWiki\\Extension\\HamichlolAds\\HookHandler",
 			"services": [
 				"MainConfig",
-				"UserOptionsLookup"
+				"UserOptionsLookup",
+				"UserRegistrationLookup",
+				"UserEditTracker"
 			]
 		}
 	},

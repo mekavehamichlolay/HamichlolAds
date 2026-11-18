@@ -14,6 +14,8 @@ use MediaWiki\Preferences\Hook\GetPreferencesHook;
 use MediaWiki\Skin\Skin;
 use MediaWiki\Title\Title;
 use MediaWiki\User\Options\UserOptionsLookup;
+use MediaWiki\User\Registration\UserRegistrationLookup;
+use MediaWiki\User\UserEditTracker;
 use Wikimedia\Timestamp\TimestampFormat;
 
 /**
@@ -38,15 +40,21 @@ class HookHandler implements
 
 	private Config $config;
 	private UserOptionsLookup $userOptionsLookup;
+	private UserRegistrationLookup $userRegistrationLookup;
+	private UserEditTracker $userEditTracker;
 
 	private const HAMICHLLOL_ADS_EXEMPT_RIGHT = 'hamichlolads-exempt';
 
 	public function __construct(
 		 Config $config,
-		 UserOptionsLookup $userOptionsLookup
+		 UserOptionsLookup $userOptionsLookup,
+		 UserRegistrationLookup $userRegistrationLookup,
+		 UserEditTracker $userEditTracker
 	) {
 		$this->config = $config;
 		$this->userOptionsLookup = $userOptionsLookup;
+		$this->userRegistrationLookup = $userRegistrationLookup;
+		$this->userEditTracker = $userEditTracker;
 	}
 
 	public function onUserGetRights( $user, &$rights ){
@@ -56,7 +64,7 @@ class HookHandler implements
 		if ( !$user->isRegistered() ) {
 			return true;
 		}
-		$registrationDate = MediaWikiServices::getInstance()->getUserRegistrationLookup()->getFirstRegistration( $user );
+		$registrationDate = $this->userRegistrationLookup->getFirstRegistration( $user );
 		if ( !$registrationDate ) {
 			return true;
 		}
@@ -65,7 +73,7 @@ class HookHandler implements
 			return true;
 		}
 		$age = time() - (int)wfTimestampOrNull( TimestampFormat::UNIX, $registrationDate );
-		$contributions = MediaWikiServices::getInstance()->getUserEditTracker()->getUserEditCount( $user );
+		$contributions = $this->userEditTracker->getUserEditCount( $user );
 		if ( $age >= $this->config->get( 'HamichlolAdsExemptAge' )  && $contributions >= $this->config->get( 'HamichlolAdsExemptContributions' ) ) {
 			$rights[] = self::HAMICHLLOL_ADS_EXEMPT_RIGHT;
 		}
