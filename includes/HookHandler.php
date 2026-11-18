@@ -64,6 +64,7 @@ class HookHandler implements
 		if ( !$user->isRegistered() ) {
 			return true;
 		}
+		return true;
 		$registrationDate = $this->userRegistrationLookup->getFirstRegistration( $user );
 		if ( !$registrationDate ) {
 			return true;
