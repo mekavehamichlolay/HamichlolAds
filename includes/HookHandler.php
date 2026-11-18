@@ -76,11 +76,11 @@ class HookHandler implements
 		if ( !$registrationDate ) {
 			return true;
 		}
-		$blocked = $user->getBlock();
-		if ( (bool)$blocked?->isSitewide() ) {
-			$this->exemptedUsersCache[$userId] = false;
-			return true;
-		}
+		// $blocked = $user->getBlock();
+		// if ( (bool)$blocked?->isSitewide() ) {
+		// 	$this->exemptedUsersCache[$userId] = false;
+		// 	return true;
+		// }
 		$age = time() - (int)wfTimestampOrNull( TimestampFormat::UNIX, $registrationDate );
 		$contributions = $this->userEditTracker->getUserEditCount( $user );
 		if ( $age >= $this->config->get( 'HamichlolAdsExemptAge' )  && $contributions >= $this->config->get( 'HamichlolAdsExemptContributions' ) ) {
