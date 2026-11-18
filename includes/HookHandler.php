@@ -61,10 +61,6 @@ class HookHandler implements
 		if ( in_array( self::HAMICHLLOL_ADS_EXEMPT_RIGHT, $rights ) ) {
 			return true;
 		}
-		if ( !$user->isRegistered() ) {
-			return true;
-		}
-		return true;
 		$registrationDate = $this->userRegistrationLookup->getFirstRegistration( $user );
 		if ( !$registrationDate ) {
 			return true;
