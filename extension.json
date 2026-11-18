@@ -32,7 +32,8 @@
 		"ParserFirstCallInit": "main",
 		"BeforePageDisplay": "main",
 		"SkinAfterContent": "main",
-		"GetPreferences": "main"
+		"GetPreferences": "main",
+		"UserGetRights": "main"
 	},
 	"AvailableRights": [
 		"hamichlolads-exempt"
@@ -198,6 +199,14 @@
 				"ביאורים",
 				"הערות שוליים"
 			]
+		},
+		"HamichlolAdsExemptAge": {
+			"description": "Minimum age (in seconds) for a user to be exempt from ads. default is 15552000 (6 months)",
+			"value": 15552000
+		},
+		"HamichlolAdsExemptContributions": {
+			"description": "Minimum number of contributions for a user to be exempt from ads. default is 500",
+			"value": 500
 		}
 	},
 	"manifest_version": 2

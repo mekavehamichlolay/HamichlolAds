@@ -9,10 +9,12 @@ use MediaWiki\Hook\SkinAfterContentHook;
 use MediaWiki\Html\Html;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Output\OutputPage;
+use MediaWiki\Permissions\Hook\UserGetRightsHook;
 use MediaWiki\Preferences\Hook\GetPreferencesHook;
 use MediaWiki\Skin\Skin;
 use MediaWiki\Title\Title;
 use MediaWiki\User\Options\UserOptionsLookup;
+use Wikimedia\Timestamp\TimestampFormat;
 
 /**
  * Taboola ads in slots that the site places and controls.
@@ -25,7 +27,8 @@ class HookHandler implements
 	ParserFirstCallInitHook,
 	BeforePageDisplayHook,
 	SkinAfterContentHook,
-	GetPreferencesHook
+	GetPreferencesHook,
+	UserGetRightsHook
 {
 	/** Hamichlol's Portal namespace ("פורטל"). */
 	private const PORTAL_NAMESPACE = 4000;
@@ -36,12 +39,36 @@ class HookHandler implements
 	private Config $config;
 	private UserOptionsLookup $userOptionsLookup;
 
+	private const HAMICHLLOL_ADS_EXEMPT_RIGHT = 'hamichlolads-exempt';
+
 	public function __construct(
 		 Config $config,
 		 UserOptionsLookup $userOptionsLookup
 	) {
 		$this->config = $config;
 		$this->userOptionsLookup = $userOptionsLookup;
+	}
+
+	public function onUserGetRights( $user, &$rights ){
+		if ( in_array( self::HAMICHLLOL_ADS_EXEMPT_RIGHT, $rights ) ) {
+			return;
+		}
+		if ( !$user->isRegistered() ) {
+			return;
+		}
+		$registrationDate = MediaWikiServices::getInstance()->getUserRegistrationLookup()->getFirstRegistration( $user );
+		if ( !$registrationDate ) {
+			return;
+		}
+		$blocked = $user->getBlock();
+		if ( (bool)$blocked?->isSitewide() ) {
+			return;
+		}
+		$age = time() - (int)wfTimestampOrNull( TimestampFormat::UNIX, $registrationDate );
+		$contributions = MediaWikiServices::getInstance()->getUserEditTracker()->getUserEditCount( $user );
+		if ( $age >= $this->config->get( 'HamichlolAdsExemptAge' )  && $contributions >= $this->config->get( 'HamichlolAdsExemptContributions' ) ) {
+			$rights[] = self::HAMICHLLOL_ADS_EXEMPT_RIGHT;
+		}
 	}
 
 	/**
@@ -109,7 +136,7 @@ class HookHandler implements
 	 * @inheritDoc
 	 */
 	public function onGetPreferences( $user, &$preferences ) {
-		if ( $this->config->get( 'HamichlolAdsEnabled' ) && $user->isAllowed( 'hamichlolads-exempt' ) ) {
+		if ( $this->config->get( 'HamichlolAdsEnabled' ) && $user->isAllowed( self::HAMICHLLOL_ADS_EXEMPT_RIGHT ) ) {
 			$preferences['hamichlolads-show'] = [
 				'type' => 'toggle',
 				'label-message' => 'hamichlolads-pref-show',
@@ -162,7 +189,7 @@ class HookHandler implements
 
 		// Users with special rights see no ads, unless they turned them on in their preferences.
 		$user = $out->getUser();
-		if ( $user->isAllowed( 'hamichlolads-exempt' )
+		if ( $user->isAllowed( self::HAMICHLLOL_ADS_EXEMPT_RIGHT )
 			&& !$this->userOptionsLookup->getBoolOption( $user, 'hamichlolads-show' )
 		) {
 			return null;
