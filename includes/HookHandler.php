@@ -44,6 +44,7 @@ class HookHandler implements
 	private UserEditTracker $userEditTracker;
 
 	private const HAMICHLLOL_ADS_EXEMPT_RIGHT = 'hamichlolads-exempt';
+	private $exemptedUsersCache = [];
 
 	public function __construct(
 		 Config $config,
@@ -61,18 +62,32 @@ class HookHandler implements
 		if ( in_array( self::HAMICHLLOL_ADS_EXEMPT_RIGHT, $rights ) ) {
 			return true;
 		}
+		$userId = $user->getId();
+		if ( $userId === 0 ) {
+			return true;
+		}
+		if ( isset( $this->exemptedUsersCache[$userId] ) ) {
+			if( $this->exemptedUsersCache[$userId] ) {
+				$rights[] = self::HAMICHLLOL_ADS_EXEMPT_RIGHT;
+			}
+			return true;
+		}
 		$registrationDate = $this->userRegistrationLookup->getFirstRegistration( $user );
 		if ( !$registrationDate ) {
 			return true;
 		}
 		$blocked = $user->getBlock();
 		if ( (bool)$blocked?->isSitewide() ) {
+			$this->exemptedUsersCache[$userId] = false;
 			return true;
 		}
 		$age = time() - (int)wfTimestampOrNull( TimestampFormat::UNIX, $registrationDate );
 		$contributions = $this->userEditTracker->getUserEditCount( $user );
 		if ( $age >= $this->config->get( 'HamichlolAdsExemptAge' )  && $contributions >= $this->config->get( 'HamichlolAdsExemptContributions' ) ) {
 			$rights[] = self::HAMICHLLOL_ADS_EXEMPT_RIGHT;
+			$this->exemptedUsersCache[$userId] = true;
+		} else {
+			$this->exemptedUsersCache[$userId] = false;
 		}
 		return true;
 	}
